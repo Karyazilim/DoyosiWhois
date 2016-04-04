@@ -13,7 +13,10 @@ http://webmasterturk.com/whois/
 # How to install?
 
 Just upload whois folder...
+You need to change LIMITS = 5 to whatever you want in config.ini file for limiting bulk whois requestes.
+
 Required min. PHP 5.3+
+
 
 
 # Supported TLDs
