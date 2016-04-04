@@ -12,4 +12,5 @@ $f3->config('config.ini');
 
 $f3->route('GET /',	'Home->Display');
 $f3->route('GET|POST /whois [ajax]', 'Home->Whois');
+$f3->route('GET|POST /bulkwhois [ajax]', 'Home->BulkWhois');
 $f3->run();

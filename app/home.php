@@ -33,7 +33,7 @@ class Home extends Prefab {
     if($server) {
 	if($this->fw->exists("whois.$domain")) {
 	$get_data = $this->fw->get("whois.$domain");		
-	} else {    
+	} else {
 	$web = \Web::instance();
     $get_data = $web->whois($domain, $server);
 	$this->fw->set("whois.$domain" , $get_data, 86400);
@@ -48,6 +48,33 @@ class Home extends Prefab {
     }
     } else {
     $response = ["status"=>"error", "data"=>"not valid domain", $extr];
+    }
+    $this->fw->set("response", json_encode($response)); //application/javascript
+    echo \Template::instance()->render('whois.json', 'application/json');
+    }
+
+    function BulkWhois() {
+    if($this->fw->exists("POST.domain") && strlen($this->fw->get("POST.domain")) > 10){
+    $domains = $this->fw->get("POST.domain");
+    $domains = $this->fw->scrub($domains);
+    $domains = explode("\n", $domains);
+
+    if(count($domains)>0) {
+    foreach($domains as $domax) {
+    $a = $this->clear($domax);
+    $a = $this->clearDomain($a);
+    if($this->isValidDomain($a)) $ddd[] = $a;
+    }
+
+    $ddd = @array_unique($ddd);
+    if (count($ddd) == 0 ) $response = ["status"=>"error", "data"=>"No valid domains"];
+	else if($this->fw->LIMITS >= count($ddd)) $response = ["status"=>"success", "data"=>$ddd];
+    else $response = ["status"=>"error", "data"=>"Maximum ".$this->fw->LIMITS." domains allowed"];
+    } else {
+    $response = ["status"=>"error", "data"=>"Please write domains", $ddd];
+    }
+    } else {
+    $response = ["status"=>"error", "data"=>"Please write domains 2"];
     }
     $this->fw->set("response", json_encode($response)); //application/javascript
     echo \Template::instance()->render('whois.json', 'application/json');
