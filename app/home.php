@@ -31,8 +31,14 @@ class Home extends Prefab {
     if($ext) {
     $server = isset($this->all["$ext"][0]) ? $this->all["$ext"][0] : false;
     if($server) {
-    $web = \Web::instance();
+	if($this->fw->exists("whois.$domain")) {
+	$get_data = $this->fw->get("whois.$domain");		
+	} else {    
+	$web = \Web::instance();
     $get_data = $web->whois($domain, $server);
+	$this->fw->set("whois.$domain" , $get_data, 86400);
+	}
+
     $response = ["status"=>"success", "data"=>nl2br($get_data)];
     } else {
     $response = ["status"=>"error", "data"=>"server not found", $extr];
