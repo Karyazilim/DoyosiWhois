@@ -7,7 +7,7 @@ Free open source php whois script with lots of tlds..
 
 # Demo Here: 
 
-http://webmasterturk.com/whois/
+https://whois.doyosi.com/
 
 
 # How to install?
