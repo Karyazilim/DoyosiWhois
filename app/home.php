@@ -94,7 +94,7 @@ class Home extends Prefab {
 	$value = trim($value);
 	$validhost = true;
 	if (strpos($value, 'http://') === false && strpos($value, 'https://') === false) { $value = 'http://'.$value; }
-	if (filter_var($value, FILTER_VALIDATE_URL, FILTER_FLAG_HOST_REQUIRED) === false) { $validhost = false; } else { $host = parse_url($value, PHP_URL_HOST);
+	if (filter_var($value, FILTER_VALIDATE_URL) === false) { $validhost = false; } else { $host = parse_url($value, PHP_URL_HOST);
 	$dotcount = substr_count($host, '.');
 	if ($dotcount > 0) {
 	if ($dotcount == 1) {
