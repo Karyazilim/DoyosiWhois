@@ -20,8 +20,10 @@
 
 */
 
-//! Cache-based session handler
-class Session {
+namespace DB\Mongo;
+
+//! MongoDB-managed session handler
+class Session extends Mapper {
 
 	protected
 		//! Session ID
@@ -33,9 +35,7 @@ class Session {
 		//! IP,
 		$_ip,
 		//! Suspect callback
-		$onsuspect,
-		//! Cache instance
-		$_cache;
+		$onsuspect;
 
 	/**
 	*	Open session
@@ -52,6 +52,7 @@ class Session {
 	*	@return TRUE
 	**/
 	function close() {
+		$this->reset();
 		$this->sid=NULL;
 		return TRUE;
 	}
@@ -62,21 +63,22 @@ class Session {
 	*	@param $id string
 	**/
 	function read($id) {
-		$this->sid=$id;
-		if (!$data=$this->_cache->get($id.'.@'))
+		$this->load(['session_id'=>$this->sid=$id]);
+		if ($this->dry())
 			return '';
-		if ($data['ip']!=$this->_ip || $data['agent']!=$this->_agent) {
-			$fw=Base::instance();
+		if ($this->get('ip')!=$this->_ip || $this->get('agent')!=$this->_agent) {
+			$fw=\Base::instance();
 			if (!isset($this->onsuspect) ||
 				$fw->call($this->onsuspect,[$this,$id])===FALSE) {
-				//NB: `session_destroy` can't be called at that stage (`session_start` not completed)
+				// NB: `session_destroy` can't be called at that stage;
+				// `session_start` not completed
 				$this->destroy($id);
 				$this->close();
 				unset($fw->{'COOKIE.'.session_name()});
 				$fw->error(403);
 			}
 		}
-		return $data['data'];
+		return $this->get('data');
 	}
 
 	/**
@@ -86,17 +88,12 @@ class Session {
 	*	@param $data string
 	**/
 	function write($id,$data) {
-		$fw=Base::instance();
-		$jar=$fw->JAR;
-		$this->_cache->set($id.'.@',
-			[
-				'data'=>$data,
-				'ip'=>$this->_ip,
-				'agent'=>$this->_agent,
-				'stamp'=>time()
-			],
-			$jar['expire']
-		);
+		$this->set('session_id',$id);
+		$this->set('data',$data);
+		$this->set('ip',$this->_ip);
+		$this->set('agent',$this->_agent);
+		$this->set('stamp',time());
+		$this->save();
 		return TRUE;
 	}
 
@@ -106,7 +103,7 @@ class Session {
 	*	@param $id string
 	**/
 	function destroy($id) {
-		$this->_cache->clear($id.'.@');
+		$this->erase(['session_id'=>$id]);
 		return TRUE;
 	}
 
@@ -116,7 +113,7 @@ class Session {
 	*	@param $max int
 	**/
 	function cleanup($max) {
-		$this->_cache->reset('.@',$max);
+		$this->erase(['$where'=>'this.stamp+'.$max.'<'.time()]);
 		return TRUE;
 	}
 
@@ -151,8 +148,7 @@ class Session {
 	function stamp() {
 		if (!$this->sid)
 			session_start();
-		return $this->_cache->exists($this->sid.'.@',$data)?
-			$data['stamp']:FALSE;
+		return $this->dry()?FALSE:$this->get('stamp');
 	}
 
 	/**
@@ -165,12 +161,14 @@ class Session {
 
 	/**
 	*	Instantiate class
+	*	@param $db \DB\Mongo
+	*	@param $table string
 	*	@param $onsuspect callback
 	*	@param $key string
 	**/
-	function __construct($onsuspect=NULL,$key=NULL,$cache=null) {
+	function __construct(\DB\Mongo $db,$table='sessions',$onsuspect=NULL,$key=NULL) {
+		parent::__construct($db,$table);
 		$this->onsuspect=$onsuspect;
-		$this->_cache=$cache?:Cache::instance();
 		session_set_save_handler(
 			[$this,'open'],
 			[$this,'close'],

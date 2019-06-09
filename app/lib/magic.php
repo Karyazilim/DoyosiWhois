@@ -2,7 +2,7 @@
 
 /*
 
-	Copyright (c) 2009-2015 F3::Factory/Bong Cosca, All rights reserved.
+	Copyright (c) 2009-2019 F3::Factory/Bong Cosca, All rights reserved.
 
 	This file is part of the Fat-Free Framework (http://fatfreeframework.com).
 
@@ -59,18 +59,19 @@ abstract class Magic implements ArrayAccess {
 	**/
 	function offsetexists($key) {
 		return Base::instance()->visible($this,$key)?
-			isset($this->$key):$this->exists($key);
+			isset($this->$key):
+			($this->exists($key) && $this->get($key)!==NULL);
 	}
 
 	/**
 	*	Convenience method for assigning property value
 	*	@return mixed
 	*	@param $key string
-	*	@param $val scalar
+	*	@param $val mixed
 	**/
 	function offsetset($key,$val) {
 		return Base::instance()->visible($this,$key)?
-			($this->key=$val):$this->set($key,$val);
+			($this->$key=$val):$this->set($key,$val);
 	}
 
 	/**
@@ -111,7 +112,7 @@ abstract class Magic implements ArrayAccess {
 	*	Alias for offsetset()
 	*	@return mixed
 	*	@param $key string
-	*	@param $val scalar
+	*	@param $val mixed
 	**/
 	function __set($key,$val) {
 		return $this->offsetset($key,$val);
@@ -129,7 +130,6 @@ abstract class Magic implements ArrayAccess {
 
 	/**
 	*	Alias for offsetunset()
-	*	@return NULL
 	*	@param $key string
 	**/
 	function __unset($key) {

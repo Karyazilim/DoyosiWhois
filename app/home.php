@@ -14,7 +14,6 @@ class Home extends Prefab {
     }
 
     function Display() {
-
     echo \Template::instance()->render('default.html');
     }
 
